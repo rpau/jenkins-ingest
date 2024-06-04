@@ -7,26 +7,31 @@ on:
       org:
         description: 'The GH org'
         required: true
-env:
-  GITHUB_TOKEN: ${{secrets.PAT}}
+
 jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          token: ${{secrets.PAT}}
-          repository: moderneinc/jenkins-ingest
+          distribution: 'temurin'
+          java-version: '17'
       - name: Adds an org
         run: ./add-github-organization.sh ${{ inputs.org }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{secrets.PAT}}
+          branch: add/${{ inputs.org }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           title: "[Auto] The ${{ inputs.org }} GitHub organization is added"
+          body: |
+            [Auto] The ${{ inputs.org }} GitHub organization is added.
           commit-message: "[Auto] The ${{ inputs.org }} GitHub organization is added"
+          labels: enhancement
       - name: Check outputs
         if: ${{ steps.cpr.outputs.pull-request-number }}
         run: |
